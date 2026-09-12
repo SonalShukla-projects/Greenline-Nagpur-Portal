@@ -1,855 +1,780 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Greenline Nagpur: Eco-Routing & Green Logistics Platform</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            }
+          }
+        }
+      }
+    }
+  </script>
 
-<title>Green Footprint Tracker</title>
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-<link
-rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-<style>
-
-*{
-    box-sizing:border-box;
-}
-
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f4f7f6;
-    color:#17231d;
-}
-
-header{
-    background:#143d2b;
-    color:white;
-    padding:18px 30px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-header h1{
-    margin:0;
-    font-size:22px;
-}
-
-.container{
-    max-width:1250px;
-    margin:25px auto;
-    padding:0 18px;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:350px 1fr;
-    gap:20px;
-}
-
-.card{
-    background:white;
-    border-radius:15px;
-    padding:20px;
-    box-shadow:0 4px 18px rgba(0,0,0,.08);
-    margin-bottom:20px;
-}
-
-label{
-    display:block;
-    margin-top:12px;
-    font-weight:bold;
-}
-
-input,select,button{
-    width:100%;
-    padding:11px;
-    margin-top:6px;
-    border-radius:8px;
-    border:1px solid #ccd5cf;
-}
-
-button{
-    background:#176b45;
-    color:white;
-    border:none;
-    cursor:pointer;
-    font-weight:bold;
-    margin-top:15px;
-}
-
-button:hover{
-    opacity:.9;
-}
-
-#map{
-    height:520px;
-    border-radius:12px;
-}
-
-.stats{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:12px;
-}
-
-.stat{
-    background:white;
-    padding:15px;
-    border-radius:12px;
-    text-align:center;
-}
-
-.stat strong{
-    display:block;
-    font-size:25px;
-    margin-top:5px;
-}
-
-.status{
-    padding:10px;
-    background:#eef7f1;
-    border-radius:8px;
-    margin-top:10px;
-}
-
-@media(max-width:850px){
-    .grid{
-        grid-template-columns:1fr;
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #020617;
+      overflow-x: hidden;
     }
 
-    .stats{
-        grid-template-columns:repeat(2,1fr);
+    /* Force Leaflet map container to render with explicit dimensions */
+    #map {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 520px !important;
+      z-index: 10;
+      background: #0f172a;
     }
-}
 
-</style>
+    .leaflet-container {
+      width: 100% !important;
+      height: 100% !important;
+      background: #0f172a !important;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+  </style>
 </head>
-
-<body>
-
-<header>
-
-<h1>🌱 Green Footprint Tracker</h1>
-
-<div id="connection">
-● Connecting...
-</div>
-
-</header>
-
-
-<div class="container">
-
-<div class="stats">
-
-<div class="stat">
-Deliveries
-<strong id="deliveries">0</strong>
-</div>
-
-<div class="stat">
-Total CO₂
-<strong id="totalCarbon">0 kg</strong>
-</div>
-
-<div class="stat">
-GPS Points
-<strong id="gpsPoints">0</strong>
-</div>
-
-<div class="stat">
-System
-<strong>LIVE</strong>
-</div>
-
-</div>
-
-
-<br>
-
-
-<div class="grid">
-
-<div>
-
-<div class="card">
-
-<h2>🚚 Delivery Planner</h2>
-
-<label>Pickup</label>
-
-<input
-id="pickup"
-value="Nagpur, Maharashtra"
-/>
-
-<label>Destination</label>
-
-<input
-id="destination"
-value="Wardha, Maharashtra"
-/>
-
-<label>Parcel Weight (kg)</label>
-
-<input
-id="weight"
-type="number"
-value="10"
-/>
-
-<label>Vehicle</label>
-
-<select id="vehicle">
-
-<option value="diesel_van">
-Diesel Van
-</option>
-
-<option value="petrol_car">
-Petrol Car
-</option>
-
-<option value="electric_van">
-Electric Van
-</option>
-
-<option value="bike">
-Delivery Bike
-</option>
-
-</select>
-
-<label>Vehicle Age (years)</label>
-
-<input
-id="vehicleAge"
-type="number"
-value="5"
-/>
-
-<button onclick="calculateRoute()">
-Calculate Eco Route
-</button>
-
-<div id="routeResult" class="status">
-Enter locations and calculate route.
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h2>🌦️ Live Environment</h2>
-
-<div id="weather">
-Loading...
-</div>
-
-<hr>
-
-<div id="aqi">
-Loading...
-</div>
-
-<button onclick="refreshEnvironment()">
-Refresh Live Data
-</button>
-
-</div>
-
-
-<div class="card">
-
-<h2>📍 Live Driver Tracking</h2>
-
-<div id="gpsStatus" class="status">
-GPS not started.
-</div>
-
-<button onclick="startTracking()">
-Start Live GPS
-</button>
-
-</div>
-
-</div>
-
-
-<div>
-
-<div class="card">
-
-<h2>🗺️ Live Delivery Map</h2>
-
-<div id="map"></div>
-
-</div>
-
-<div class="card">
-
-<h2>🌱 Carbon Analysis</h2>
-
-<div id="carbonResult">
-No route calculated yet.
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-
-<script
-src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
-
-
-<script>
-
-let map;
-
-let driverMarker;
-
-let routeLayer;
-
-let pickupLocation;
-
-let destinationLocation;
-
-let socket;
-
-
-function initMap(){
-
-    map = L.map("map").setView(
-        [21.1458,79.0882],
-        10
-    );
-
-    L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        {
-            maxZoom:19,
-            attribution:
-            "&copy; OpenStreetMap contributors"
-        }
-    ).addTo(map);
-
-}
-
-
-async function geocode(query){
-
-    const response =
-        await fetch(
-            "/api/geocode?q=" +
-            encodeURIComponent(query)
-        );
-
-    if(!response.ok){
-
-        throw new Error(
-            "Location not found"
-        );
-
-    }
-
-    return await response.json();
-
-}
-
-
-async function calculateRoute(){
-
-    try{
-
-        document.getElementById(
-            "routeResult"
-        ).innerText =
-            "Finding real road route...";
-
-        const pickup =
-            await geocode(
-                document.getElementById(
-                    "pickup"
-                ).value
-            );
-
-        const destination =
-            await geocode(
-                document.getElementById(
-                    "destination"
-                ).value
-            );
-
-        pickupLocation = pickup;
-
-        destinationLocation = destination;
-
-
-        const weight =
-            parseFloat(
-                document.getElementById(
-                    "weight"
-                ).value
-            );
-
-        const vehicle =
-            document.getElementById(
-                "vehicle"
-            ).value;
-
-        const vehicleAge =
-            parseFloat(
-                document.getElementById(
-                    "vehicleAge"
-                ).value
-            );
-
-
-        const url =
-            `/api/eco-route?` +
-            `start_lat=${pickup.lat}` +
-            `&start_lon=${pickup.lon}` +
-            `&end_lat=${destination.lat}` +
-            `&end_lon=${destination.lon}`;
-
-
-        const response =
-            await fetch(
-                "/api/eco-route",
-                {
-                    method:"POST",
-                    headers:{
-                        "Content-Type":
-                        "application/json"
-                    },
-                    body:JSON.stringify({
-
-                        start_lat:
-                            pickup.lat,
-
-                        start_lon:
-                            pickup.lon,
-
-                        end_lat:
-                            destination.lat,
-
-                        end_lon:
-                            destination.lon,
-
-                        weight:weight,
-
-                        vehicle:vehicle,
-
-                        vehicle_age:
-                            vehicleAge
-
-                    })
-                }
-            );
-
-
-        const data =
-            await response.json();
-
-
-        if(!response.ok){
-
-            throw new Error(
-                data.detail ||
-                "Route failed"
-            );
-
-        }
-
-
-        if(routeLayer){
-
-            map.removeLayer(
-                routeLayer
-            );
-
-        }
-
-
-        const best =
-            data.recommended;
-
-
-        routeLayer =
-            L.geoJSON(
-                best.geometry,
-                {
-                    style:{
-                        weight:6
-                    }
-                }
-            ).addTo(map);
-
-
-        map.fitBounds(
-            routeLayer.getBounds()
-        );
-
-
-        L.marker([
-            pickup.lat,
-            pickup.lon
-        ])
-        .addTo(map)
-        .bindPopup(
-            "📦 Pickup"
-        );
-
-
-        L.marker([
-            destination.lat,
-            destination.lon
-        ])
-        .addTo(map)
-        .bindPopup(
-            "🏁 Destination"
-        );
-
-
-        document.getElementById(
-            "routeResult"
-        ).innerHTML = `
-
-        <b>🌱 Recommended Eco Route</b><br><br>
-
-        Distance:
-        ${best.distance_km} km<br>
-
-        Duration:
-        ${best.duration_min} min<br>
-
-        Estimated CO₂:
-        ${best.carbon_kg} kg<br>
-
-        Score:
-        ${best.score}
-
-        `;
-
-
-        document.getElementById(
-            "carbonResult"
-        ).innerHTML = `
-
-        <h3>🌱 Carbon Footprint</h3>
-
-        Estimated Emission:
-        <b>${best.carbon_kg} kg CO₂</b>
-
-        <br><br>
-
-        This route is selected using
-        distance + estimated carbon score.
-
-        `;
-
-
-        refreshEnvironment();
-
-    }
-
-    catch(error){
-
-        document.getElementById(
-            "routeResult"
-        ).innerText =
-            "Error: " + error.message;
-
-    }
-
-}
-
-
-async function refreshEnvironment(){
-
-    if(!pickupLocation){
-
-        try{
-
-            pickupLocation =
-                await geocode(
-                    document.getElementById(
-                        "pickup"
-                    ).value
-                );
-
-        }
-
-        catch{
-
-            return;
-
-        }
-
-    }
-
-
-    try{
-
-        const weatherResponse =
-            await fetch(
-                `/api/weather?lat=${
-                    pickupLocation.lat
-                }&lon=${
-                    pickupLocation.lon
-                }`
-            );
-
-
-        const weather =
-            await weatherResponse.json();
-
-
-        const c =
-            weather.current;
-
-
-        document.getElementById(
-            "weather"
-        ).innerHTML = `
-
-        🌡️ Temperature:
-        <b>${c.temperature_2m}°C</b><br>
-
-        💧 Humidity:
-        <b>${c.relative_humidity_2m}%</b><br>
-
-        🌧️ Precipitation:
-        <b>${c.precipitation} mm</b><br>
-
-        💨 Wind:
-        <b>${c.wind_speed_10m} km/h</b>
-
-        `;
-
-
-        const aqiResponse =
-            await fetch(
-                `/api/aqi?lat=${
-                    pickupLocation.lat
-                }&lon=${
-                    pickupLocation.lon
-                }`
-            );
-
-
-        const aqi =
-            await aqiResponse.json();
-
-
-        const a =
-            aqi.current;
-
-
-        document.getElementById(
-            "aqi"
-        ).innerHTML = `
-
-        💨 European AQI:
-        <b>${a.european_aqi}</b><br>
-
-        PM2.5:
-        <b>${a.pm2_5} μg/m³</b><br>
-
-        PM10:
-        <b>${a.pm10} μg/m³</b>
-
-        `;
-
-    }
-
-    catch(error){
-
-        console.log(error);
-
-    }
-
-}
-
-
-function startTracking(){
-
-    if(!navigator.geolocation){
-
-        document.getElementById(
-            "gpsStatus"
-        ).innerText =
-            "GPS is not supported.";
-
-        return;
-
-    }
-
-
-    socket =
-        new WebSocket(
-            `ws://${location.host}/ws/location`
-        );
-
-
-    socket.onopen = () => {
-
-        document.getElementById(
-            "connection"
-        ).innerText =
-            "● LIVE";
-
-        document.getElementById(
-            "gpsStatus"
-        ).innerText =
-            "🟢 Live GPS tracking started.";
-
-    };
-
-
-    navigator.geolocation.watchPosition(
-
-        position => {
-
-            const lat =
-                position.coords.latitude;
-
-            const lon =
-                position.coords.longitude;
-
-
-            if(
-                socket &&
-                socket.readyState === WebSocket.OPEN
-            ){
-
-                socket.send(
-                    JSON.stringify({
-                        lat:lat,
-                        lon:lon
-                    })
-                );
-
-            }
-
-
-            if(!driverMarker){
-
-                driverMarker =
-                    L.marker([
-                        lat,
-                        lon
-                    ])
-                    .addTo(map)
-                    .bindPopup(
-                        "🚚 Live Driver"
-                    );
-
-            }
-
-            else{
-
-                driverMarker.setLatLng([
-                    lat,
-                    lon
-                ]);
-
-            }
-
-
-            map.setView(
-                [lat,lon],
-                15
-            );
-
-
-            document.getElementById(
-                "gpsStatus"
-            ).innerText =
-                `🟢 Live location:
-                ${lat.toFixed(5)},
-                ${lon.toFixed(5)}`;
-
-        },
-
-        error => {
-
-            document.getElementById(
-                "gpsStatus"
-            ).innerText =
-                "GPS permission required.";
-
-        },
-
-        {
-            enableHighAccuracy:true,
-            maximumAge:3000,
-            timeout:10000
-        }
-
-    );
-
-}
-
-
-async function loadStats(){
-
-    try{
-
-        const response =
-            await fetch(
-                "/api/stats"
-            );
-
-        const data =
-            await response.json();
-
-
-        document.getElementById(
-            "deliveries"
-        ).innerText =
-            data.deliveries;
-
-
-        document.getElementById(
-            "totalCarbon"
-        ).innerText =
-            data.carbon_kg + " kg";
-
-
-        document.getElementById(
-            "gpsPoints"
-        ).innerText =
-            data.gps_points;
-
-    }
-
-    catch{}
-
-}
-
-
-initMap();
-
-loadStats();
-
-setInterval(
-    loadStats,
-    5000
-);
-
-</script>
-
+<body class="bg-slate-950 text-slate-100 flex flex-col h-full font-sans antialiased">
+
+  <!-- ========================================================= -->
+  <!-- LOGIN & ROLE SELECTION FULL-PAGE PORTAL -->
+  <!-- ========================================================= -->
+  <div id="loginModal" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div class="bg-slate-900/90 border border-slate-800 w-full max-w-2xl rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      
+      <!-- Modal Header -->
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 mx-auto flex items-center justify-center shadow-xl shadow-emerald-900/50">
+          <i data-lucide="leaf" class="w-8 h-8 text-white"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white tracking-tight">Greenline Nagpur Portal</h2>
+        <p class="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+          Eco-Routing Logistics Platform. Please select your role to access your dedicated portal.
+        </p>
+      </div>
+
+      <!-- Quick 1-Click Role Login Cards -->
+      <div class="space-y-2.5">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">
+          Choose Your Role to Enter Portal
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          
+          <!-- CUSTOMER CARD -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-sky-500/30 hover:border-sky-500/60 flex flex-col justify-between space-y-3 transition group">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                  <i data-lucide="user" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                  No Map Layout
+                </span>
+              </div>
+              <div class="text-sm font-bold text-white">Customer</div>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                Enter pickup and drop locations, select cargo weight, and track bookings.
+              </p>
+            </div>
+            <button type="button" onclick="loginAsQuick('shraddha', 'Customer')" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md shadow-sky-950/40">
+              <span>Sign in as Customer</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- DRIVER CARD -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-emerald-500/30 hover:border-emerald-500/60 flex flex-col justify-between space-y-3 transition group">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <i data-lucide="truck" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  With Map Layout
+                </span>
+              </div>
+              <div class="text-sm font-bold text-white">Dispatch Driver</div>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                View assigned delivery trips, see interactive map routes, and update fulfillment.
+              </p>
+            </div>
+            <button type="button" onclick="loginAsQuick('laxmikant', 'Dispatch Driver')" class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-950/40">
+              <span>Sign in as Driver</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- ADMIN CARD -->
+          <div class="p-4 rounded-2xl bg-slate-950 border border-purple-500/30 hover:border-purple-500/60 flex flex-col justify-between space-y-3 transition group">
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <i data-lucide="shield-check" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                  Full Map & Dispatch
+                </span>
+              </div>
+              <div class="text-sm font-bold text-white">Administrator</div>
+              <p class="text-[11px] text-slate-400 leading-relaxed">
+                View full map, inspect customer orders, and allocate verified drivers.
+              </p>
+            </div>
+            <button type="button" onclick="loginAsQuick('sonal', 'Administrator')" class="w-full py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-md shadow-purple-950/40">
+              <span>Sign in as Admin</span>
+              <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="relative flex py-1 items-center">
+        <div class="flex-grow border-t border-slate-800"></div>
+        <span class="flex-shrink mx-3 text-[10px] text-slate-500 uppercase tracking-wider">Or Sign in with Custom Credentials</span>
+        <div class="flex-grow border-t border-slate-800"></div>
+      </div>
+
+      <!-- Standard Form -->
+      <form id="loginForm" class="space-y-3" onsubmit="handleFormLogin(event)">
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1">Username</label>
+          <input type="text" id="loginUsername" placeholder="e.g. shraddha, laxmikant, sonal" required class="w-full bg-slate-950 border border-slate-700 text-xs rounded-lg p-2.5 text-white focus:border-emerald-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1">Password</label>
+          <input type="password" id="loginPassword" placeholder="Default: greenline123" required class="w-full bg-slate-950 border border-slate-700 text-xs rounded-lg p-2.5 text-white focus:border-emerald-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1">Role Permission</label>
+          <select id="loginRole" class="w-full bg-slate-950 border border-slate-700 text-xs rounded-lg p-2.5 text-white focus:border-emerald-500 focus:outline-none">
+            <option value="Customer">Customer (Booking Details - No Map Layout)</option>
+            <option value="Dispatch Driver">Dispatch Driver (View Routes & Interactive Map)</option>
+            <option value="Administrator">Administrator (Assign Driver & Full Map Controls)</option>
+          </select>
+        </div>
+
+        <button type="submit" id="btnLoginSubmit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold text-xs tracking-wide shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>Sign In to System</span>
+        </button>
+      </form>
+
+      <div id="loginErrorMsg" class="hidden text-center text-xs text-rose-400 bg-rose-950/40 border border-rose-900/50 p-2 rounded-lg"></div>
+    </div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <header class="h-16 border-b border-slate-800 bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-30 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-900/40">
+        <i data-lucide="leaf" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Greenline Nagpur
+            <span id="roleNavBadge" class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Eco-Routing Engine
+            </span>
+          </h1>
+        </div>
+        <p class="text-[10px] sm:text-xs text-slate-400">Topography & ML-Traffic Carbon Minimization Platform</p>
+      </div>
+    </div>
+
+    <!-- Active User & Session Controls -->
+    <div class="flex items-center space-x-3 sm:space-x-4">
+      <!-- 1-Click Benchmark Button -->
+      <button id="btnQuickTest" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-medium transition shadow-sm">
+        <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+        <span>Benchmark (MIHAN &rarr; Sitabuldi)</span>
+      </button>
+
+      <!-- GPS Live Tracking Toggle Button -->
+      <button id="btnGpsToggle" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-medium transition">
+        <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+        <span id="gpsStatusText">Live GPS</span>
+      </button>
+
+      <!-- User Profile Badge -->
+      <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700">
+        <div class="w-7 h-7 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 flex items-center justify-center text-xs font-bold text-slate-950" id="userAvatar">
+          --
+        </div>
+        <div class="hidden sm:block text-left leading-tight">
+          <div class="text-xs font-semibold text-white" id="userName">Not Logged In</div>
+          <div class="text-[10px] text-emerald-400 font-mono" id="userRole">Guest</div>
+        </div>
+      </div>
+
+      <!-- Switch Role / Logout Button -->
+      <button onclick="logoutUser()" title="Logout or Switch Role" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-medium transition">
+        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+        <span class="hidden sm:inline">Switch / Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================= -->
+  <!-- 1. CUSTOMER PORTAL VIEW (NO MAP LAYOUT DISPLAYED) -->
+  <!-- ========================================================= -->
+  <main id="customerPortal" class="hidden flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 overflow-y-auto space-y-6">
+    
+    <!-- Customer Welcome & Eco Banner -->
+    <div class="bg-gradient-to-r from-slate-900 via-slate-900 to-sky-950/60 rounded-2xl border border-slate-800 p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-semibold">Customer Portal</span>
+          <span class="text-xs text-slate-400">Green Logistics Booking</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-white">Book an Eco-Friendly Delivery in Nagpur</h2>
+        <p class="text-xs sm:text-sm text-slate-400 max-w-2xl">
+          Enter your pickup and drop location. Our AI Topography & Traffic Engine will calculate carbon-efficient paths, and the Administrator will assign a verified green driver to fulfill your delivery.
+        </p>
+      </div>
+
+      <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-center shrink-0">
+        <div class="text-[10px] text-slate-400 uppercase font-mono">Average CO₂ Saved</div>
+        <div class="text-lg font-bold text-emerald-400 font-mono">31.8%</div>
+        <div class="text-[10px] text-emerald-500">Per Delivery Trip</div>
+      </div>
+    </div>
+
+    <!-- Booking Form & Orders Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- LEFT: Booking Form -->
+      <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i>
+            <span>New Shipment Request</span>
+          </h3>
+          <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Eco Direct</span>
+        </div>
+
+        <form id="customerOrderForm" onsubmit="handleCustomerOrderSubmit(event)" class="space-y-4">
+          <!-- Pickup Location -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Pickup Location (Nagpur Hub)
+            </label>
+            <select id="custPickupNode" class="w-full bg-slate-950 border border-slate-700 text-xs rounded-xl p-2.5 text-white focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+              <option value="mihan">MIHAN Cargo Hub (South Zone)</option>
+              <option value="sitabuldi">Sitabuldi Central Interchange</option>
+              <option value="vnit">VNIT Campus (West Zone)</option>
+              <option value="wardhaman_nagar">Wardhaman Nagar (East Zone)</option>
+              <option value="kamptee_road">Kamptee Road Logistics (North Zone)</option>
+              <option value="seminary_hills">Seminary Hills Elevation Ridge</option>
+            </select>
+            <input type="text" id="custPickupAddress" placeholder="Specific pickup address / landmark (optional)" class="mt-1.5 w-full bg-slate-950 border border-slate-800 text-xs rounded-lg px-2.5 py-1.5 text-slate-300 placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <!-- Dropoff Location -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span> Dropoff Location (Nagpur Destination)
+            </label>
+            <select id="custDeliveryNode" class="w-full bg-slate-950 border border-slate-700 text-xs rounded-xl p-2.5 text-white focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+              <option value="sitabuldi">Sitabuldi Central Interchange</option>
+              <option value="mihan">MIHAN Cargo Hub (South Zone)</option>
+              <option value="vnit">VNIT Campus (West Zone)</option>
+              <option value="wardhaman_nagar">Wardhaman Nagar (East Zone)</option>
+              <option value="kamptee_road">Kamptee Road Logistics (North Zone)</option>
+              <option value="seminary_hills">Seminary Hills Elevation Ridge</option>
+            </select>
+            <input type="text" id="custDeliveryAddress" placeholder="Specific delivery address / landmark (optional)" class="mt-1.5 w-full bg-slate-950 border border-slate-800 text-xs rounded-lg px-2.5 py-1.5 text-slate-300 placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <!-- Cargo Weight -->
+          <div>
+            <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-1">
+              <span>Estimated Cargo Weight</span>
+              <span id="custCargoDisplay" class="font-mono text-emerald-400">250 kg</span>
+            </div>
+            <input type="range" id="custCargoSlider" min="5" max="1200" step="5" value="250" oninput="document.getElementById('custCargoDisplay').textContent = this.value + ' kg'" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+              <span>5 kg (Parcel)</span>
+              <span>600 kg</span>
+              <span>1200 kg (Freight)</span>
+            </div>
+          </div>
+
+          <!-- Package Notes -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Package Description & Notes</label>
+            <input type="text" id="custNotes" placeholder="e.g. Fragile electronics, perishable goods, documents" class="w-full bg-slate-950 border border-slate-700 text-xs rounded-xl p-2.5 text-white placeholder-slate-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <button type="submit" id="btnCustSubmitOrder" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs tracking-wider shadow-lg shadow-emerald-950/60 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span>SUBMIT ECO-DELIVERY REQUEST</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- RIGHT: My Delivery Bookings & Live Status -->
+      <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i data-lucide="clock" class="w-4 h-4 text-sky-400"></i>
+            <span>My Delivery Bookings</span>
+          </h3>
+          <button onclick="loadCustomerOrders()" class="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <!-- Orders List Container -->
+        <div id="customerOrdersList" class="space-y-3 flex-1 overflow-y-auto max-h-[560px] pr-1">
+          <div class="text-center py-12 text-slate-500 text-xs font-mono">
+            Loading your bookings...
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- 2. DRIVER & ADMIN VIEW (SPLIT-SCREEN WITH MAP LAYOUT) -->
+  <!-- ========================================================= -->
+  <main id="adminDriverLayout" class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+    <!-- LEFT PANEL: Routing Configuration, Symmetrical Comparison & Proof of Formula -->
+    <section class="w-full lg:w-[480px] xl:w-[520px] flex-shrink-0 bg-slate-900/95 border-r border-slate-800 flex flex-col h-auto lg:h-full overflow-y-auto p-4 sm:p-5 space-y-4 z-20 shadow-2xl">
+      
+      <!-- Environmental Ambient Telemetry (Weather & AQI Cards) -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-slate-950/80 rounded-xl border border-slate-800 p-2.5 flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+            <i data-lucide="sun" class="w-4 h-4"></i>
+          </div>
+          <div class="leading-tight">
+            <div class="text-[10px] text-slate-400">Nagpur Weather</div>
+            <div class="text-xs font-bold text-white font-mono" id="weatherDisplay">31.4°C • 42% RH</div>
+          </div>
+        </div>
+
+        <div class="bg-slate-950/80 rounded-xl border border-slate-800 p-2.5 flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+            <i data-lucide="wind" class="w-4 h-4"></i>
+          </div>
+          <div class="leading-tight">
+            <div class="text-[10px] text-slate-400">Air Quality Index</div>
+            <div class="text-xs font-bold text-emerald-400 font-mono" id="aqiDisplay">AQI: 52 (Moderate)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- ADMIN SECTION: DRIVER DISPATCH CONSOLE (Admin only) -->
+      <!-- ===================================================== -->
+      <div id="adminDispatchSection" class="hidden bg-slate-950/90 rounded-2xl border border-purple-500/30 p-4 space-y-3.5 shadow-lg shadow-purple-950/20">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <span class="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+            <i data-lucide="shield-alert" class="w-4 h-4"></i> Admin Dispatch: Assign Drivers
+          </span>
+          <button onclick="loadAdminOrders()" class="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 transition">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <!-- Orders Table / List for Assignment -->
+        <div id="adminOrdersContainer" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- DRIVER SECTION: ASSIGNED TRIPS CONSOLE (Driver only) -->
+      <!-- ===================================================== -->
+      <div id="driverTripsSection" class="hidden bg-slate-950/90 rounded-2xl border border-emerald-500/30 p-4 space-y-3.5 shadow-lg shadow-emerald-950/20">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+            <i data-lucide="truck" class="w-4 h-4"></i> My Assigned Delivery Trips
+          </span>
+          <button onclick="loadDriverOrders()" class="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 transition">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <div id="driverOrdersContainer" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Route Input Form -->
+      <div class="bg-slate-950/80 rounded-2xl border border-slate-800 p-4 space-y-3.5">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800/80">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i> Dispatch Parameters
+          </span>
+          <span class="text-[11px] font-mono text-emerald-400" id="mlStatusText">● ML Traffic: Online</span>
+        </div>
+
+        <!-- Node Selection Dropdowns -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 mb-1">Pickup Hub</label>
+            <select id="pickupNode" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2 text-white focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+              <option value="mihan">MIHAN Cargo Hub (South)</option>
+              <option value="sitabuldi">Sitabuldi Central Hub</option>
+              <option value="vnit">VNIT Campus (West)</option>
+              <option value="wardhaman_nagar">Wardhaman Nagar (East)</option>
+              <option value="kamptee_road">Kamptee Road (North)</option>
+              <option value="seminary_hills">Seminary Hills Ridge</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 mb-1">Delivery Destination</label>
+            <select id="deliveryNode" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2 text-white focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+              <option value="sitabuldi">Sitabuldi Central Hub</option>
+              <option value="mihan">MIHAN Cargo Hub (South)</option>
+              <option value="vnit">VNIT Campus (West)</option>
+              <option value="wardhaman_nagar">Wardhaman Nagar (East)</option>
+              <option value="kamptee_road">Kamptee Road (North)</option>
+              <option value="seminary_hills">Seminary Hills Ridge</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Optional Geocoding Search input for custom Nagpur locations -->
+        <div class="flex gap-2">
+          <input type="text" id="customAddressInput" placeholder="Or search address in Nagpur (Nominatim)..." class="flex-1 bg-slate-900 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+          <button id="btnGeocodeSearch" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">
+            Search
+          </button>
+        </div>
+
+        <!-- Vehicle Profile Selection -->
+        <div>
+          <label class="block text-[11px] font-medium text-slate-400 mb-1 flex justify-between">
+            <span>Vehicle Profile</span>
+            <span id="vehicleSpecs" class="text-[10px] text-emerald-400 font-mono">Diesel | Age: 6y | Cap: 1200kg</span>
+          </label>
+          <select id="vehicleProfile" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2 text-white focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+            <!-- Seeded dynamically -->
+          </select>
+        </div>
+
+        <!-- Cargo Load & Dispatch Time -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 mb-1 flex justify-between">
+              <span>Active Cargo</span>
+              <span id="cargoDisplay" class="text-[11px] text-emerald-400 font-mono font-bold">600 kg</span>
+            </label>
+            <input type="range" id="cargoSlider" min="0" max="1200" step="25" value="600" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+            <div class="flex justify-between text-[9px] text-slate-500 mt-1 font-mono">
+              <span>0 kg</span>
+              <span id="cargoRatioLabel">W_m: 1.50x</span>
+              <span id="maxCapacityLabel">1200 kg</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 mb-1">Dispatch Time (Peak ML)</label>
+            <input type="time" id="dispatchTime" value="09:30" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg p-2 text-white font-mono focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="btnCalculate" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-semibold text-xs tracking-wide shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+          <i data-lucide="navigation-2" class="w-4 h-4"></i>
+          <span>CALCULATE DUAL ROUTING & CARBON COST</span>
+          <span id="calcTimer" class="hidden text-[10px] bg-emerald-800/60 px-1.5 py-0.5 rounded font-mono"></span>
+        </button>
+      </div>
+
+      <!-- SYMMETRICAL COMPARISON BLOCK (Standard vs Green Route) -->
+      <div id="comparisonContainer" class="bg-slate-950/80 rounded-2xl border border-slate-800 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="scale" class="w-4 h-4 text-cyan-400"></i> Symmetrical Route Audit
+          </span>
+          <!-- Delta CO2 Badge -->
+          <div id="co2SavingsBadge" class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold font-mono flex items-center gap-1">
+            <i data-lucide="trending-down" class="w-3.5 h-3.5"></i>
+            <span id="badgeDeltaValue">--% ΔCO2</span>
+          </div>
+        </div>
+
+        <!-- Side-by-Side Verification Cards -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Standard Baseline Route (Red) -->
+          <div class="rounded-xl bg-rose-950/20 border border-rose-900/40 p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold text-rose-400 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span> Standard Path
+              </span>
+              <span class="text-[10px] text-slate-400 font-mono">Shortest Dist</span>
+            </div>
+            
+            <div class="space-y-1.5">
+              <div>
+                <div class="text-[10px] text-slate-400">Carbon Footprint</div>
+                <div class="text-base font-bold text-rose-300 font-mono" id="stdCarbon">-- g CO₂</div>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono border-t border-rose-900/30 pt-1.5">
+                <span class="text-slate-400">Distance:</span>
+                <span class="text-slate-200" id="stdDistance">-- km</span>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-slate-400">Duration:</span>
+                <span class="text-slate-200" id="stdDuration">-- min</span>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-slate-400">Idle Delay:</span>
+                <span class="text-rose-400" id="stdIdle">-- s</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Optimal Green Route (Green) -->
+          <div class="rounded-xl bg-emerald-950/20 border border-emerald-500/40 p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Eco Green Path
+              </span>
+              <span class="text-[10px] text-emerald-300/80 font-mono">A* Min Carbon</span>
+            </div>
+
+            <div class="space-y-1.5">
+              <div>
+                <div class="text-[10px] text-slate-400">Carbon Footprint</div>
+                <div class="text-base font-bold text-emerald-300 font-mono" id="grnCarbon">-- g CO₂</div>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono border-t border-emerald-900/30 pt-1.5">
+                <span class="text-slate-400">Distance:</span>
+                <span class="text-slate-200" id="grnDistance">-- km</span>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-slate-400">Duration:</span>
+                <span class="text-slate-200" id="grnDuration">-- min</span>
+              </div>
+              <div class="flex justify-between text-[11px] font-mono">
+                <span class="text-slate-400">Idle Delay:</span>
+                <span class="text-emerald-400" id="grnIdle">-- s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Net Savings Strip -->
+        <div class="bg-slate-900 rounded-lg p-2.5 flex items-center justify-around text-center text-xs font-mono">
+          <div>
+            <div class="text-[10px] text-slate-400">CO₂ Mitigated</div>
+            <div class="font-bold text-emerald-400" id="co2SavedGrams">-- g</div>
+          </div>
+          <div class="w-px h-6 bg-slate-800"></div>
+          <div>
+            <div class="text-[10px] text-slate-400">Δ Distance</div>
+            <div class="font-bold text-slate-200" id="deltaDistance">-- km</div>
+          </div>
+          <div class="w-px h-6 bg-slate-800"></div>
+          <div>
+            <div class="text-[10px] text-slate-400">Time Saved</div>
+            <div class="font-bold text-emerald-400" id="timeSavedMin">-- min</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROOF-OF-FORMULA ACCORDION / DROPDOWN -->
+      <div class="bg-slate-950/80 rounded-2xl border border-slate-800 overflow-hidden">
+        <button id="btnToggleProof" class="w-full p-4 flex items-center justify-between text-left hover:bg-slate-900/50 transition">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i data-lucide="binary" class="w-4 h-4 text-teal-400"></i>
+            Proof-of-Formula: Mathematical Decomposition
+          </span>
+          <i id="proofChevron" data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform"></i>
+        </button>
+
+        <div id="proofContent" class="hidden p-4 pt-0 border-t border-slate-800/80 space-y-3 text-xs text-slate-300 font-mono">
+          <!-- Exact Equations Header -->
+          <div class="bg-slate-900/80 rounded-lg p-3 space-y-2 text-[11px] border border-slate-800">
+            <div class="text-emerald-400 font-bold">1. Segment Cost Equation:</div>
+            <div class="bg-slate-950 p-2 rounded text-slate-200 text-[10px] overflow-x-auto">
+              C_uv = (D_i × EF_v × W_m × A_m × S_i) + (T_idle × IF_v)
+            </div>
+            <div class="text-emerald-400 font-bold">2. Symmetrical Comparison:</div>
+            <div class="bg-slate-950 p-2 rounded text-slate-200 text-[10px] overflow-x-auto">
+              ΔCO2% = ((Standard Carbon - Green Carbon) / Standard Carbon) × 100
+            </div>
+          </div>
+
+          <!-- Active Parameter Values Table -->
+          <div class="space-y-1">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Evaluation Multipliers:</div>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div class="bg-slate-900 p-2 rounded border border-slate-800/80">
+                <span class="text-slate-400">EF_v (Base Factor):</span>
+                <span class="text-white font-bold block" id="proofEF">190.0 g/km</span>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800/80">
+                <span class="text-slate-400">IF_v (Idling Const):</span>
+                <span class="text-white font-bold block" id="proofIF">0.25 g/sec</span>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800/80">
+                <span class="text-slate-400">W_m = 1 + (Cargo/Cap):</span>
+                <span class="text-white font-bold block" id="proofWm">1.50</span>
+              </div>
+              <div class="bg-slate-900 p-2 rounded border border-slate-800/80">
+                <span class="text-slate-400">A_m = 1 + (Age × 0.02):</span>
+                <span class="text-white font-bold block" id="proofAm">1.12</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Segment Expansion Table -->
+          <div>
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Eco-Route Segment Traversal:</div>
+            <div class="max-h-48 overflow-y-auto border border-slate-800 rounded-lg text-[10px]">
+              <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-900 text-slate-400 sticky top-0">
+                  <tr>
+                    <th class="p-1.5 border-b border-slate-800">Segment</th>
+                    <th class="p-1.5 border-b border-slate-800">Dist</th>
+                    <th class="p-1.5 border-b border-slate-800">Slope (S_i)</th>
+                    <th class="p-1.5 border-b border-slate-800">T_idle</th>
+                    <th class="p-1.5 border-b border-slate-800">C_uv (g)</th>
+                  </tr>
+                </thead>
+                <tbody id="proofSegmentsTbody" class="divide-y divide-slate-800/60">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLEET DASHBOARD AGGREGATED METRICS -->
+      <div class="bg-slate-950/80 rounded-2xl border border-slate-800 p-4 space-y-3">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800/80">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i> Fleet Aggregate Impact
+          </span>
+          <span class="text-[10px] text-emerald-400 font-mono font-bold" id="dbTotalTrips">-- Trips</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center font-mono">
+          <div class="bg-slate-900 p-2 rounded-xl border border-slate-800">
+            <div class="text-[9px] text-slate-400 uppercase">Total CO₂ Saved</div>
+            <div class="text-sm font-bold text-emerald-400" id="dbCo2Saved">-- kg</div>
+          </div>
+          <div class="bg-slate-900 p-2 rounded-xl border border-slate-800">
+            <div class="text-[9px] text-slate-400 uppercase">Avg Reduction</div>
+            <div class="text-sm font-bold text-cyan-400" id="dbAvgReduction">-- %</div>
+          </div>
+          <div class="bg-slate-900 p-2 rounded-xl border border-slate-800">
+            <div class="text-[9px] text-slate-400 uppercase">Trees Equivalent</div>
+            <div class="text-sm font-bold text-emerald-300" id="dbTrees">-- 🌲</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANEL: FULL-SCREEN LEAFLET MAP -->
+    <section class="flex-1 w-full h-[550px] lg:h-full relative bg-slate-900 overflow-hidden" id="map-container">
+      
+      <!-- The Leaflet Map Canvas -->
+      <div id="map"></div>
+
+      <!-- Floating Map Legend -->
+      <div class="absolute top-4 right-4 z-20 glass-panel rounded-xl p-3 shadow-xl space-y-2 text-xs font-medium max-w-[240px]">
+        <div class="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between pb-1 border-b border-slate-700/60">
+          <span>Map Legend</span>
+          <span class="text-[9px] text-emerald-400 font-mono">Nagpur Hubs</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-1 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400"></span>
+          <span class="text-slate-200">Green Eco Route (Min Carbon)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3.5 h-1 rounded-full bg-rose-500"></span>
+          <span class="text-slate-200">Standard Shortest Route</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-300"></span>
+          <span class="text-slate-300">High Slope (>5% Ridge)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500 border border-red-300"></span>
+          <span class="text-slate-300">Traffic Bottleneck Chokepoint</span>
+        </div>
+      </div>
+
+      <!-- Toast Notification -->
+      <div id="routeToast" class="hidden absolute bottom-6 right-6 z-20 glass-panel rounded-xl p-3 shadow-2xl border border-emerald-500/40 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+          <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-white" id="toastTitle">Route Optimized</div>
+          <div class="text-[11px] text-emerald-400 font-mono" id="toastDesc">Carbon reduction successfully calculated.</div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Frontend Logic Script -->
+  <script src="app.js"></script>
 </body>
 </html>
