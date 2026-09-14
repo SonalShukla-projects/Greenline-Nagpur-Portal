@@ -68,6 +68,7 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
+.\venv\Scripts\python -m uvicorn backend.main:app --host 127.0.0.1 --port 8001
 
 ### 4. Seed the Database (Optional)
 If your application requires initial baseline data setup, execute the seed script:
